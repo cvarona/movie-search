@@ -6,6 +6,7 @@ import { SearchResult, SearchResponse, FullDetails } from '../ombd/ombd.interfac
 import { Favorite } from '../favorites/favorite.interface';
 import { FavoriteService } from '../favorites/favorite.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LoaderService } from '../loader.service';
 
 const DEBOUNCE_TIME = 500;
 
@@ -21,7 +22,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
   favorites$: Observable<Array<Favorite>>;
   favoriteIcon: 'star' | 'star_outline' = 'star_outline';
   details: FullDetails;
-  loading = false;
 
   private nameInput = new Subject<string>();
 
@@ -32,6 +32,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   constructor(
     private favoriteService: FavoriteService,
+    private loaderService: LoaderService,
     private searchService: OmbdService,
     private matSnackBar: MatSnackBar,
   ) {
@@ -90,18 +91,18 @@ export class MainViewComponent implements OnInit, OnDestroy {
   }
 
   showDetail(result: SearchResult) {
-    this.loading = true;
+    this.loaderService.setActive();
     this.searchService.searchById(result.imdbId)
       .subscribe(
         (fullDetails: FullDetails) => this.details = fullDetails,
         (error: Response) => console.log(error),
       )
-      .add(() => this.loading = false);
+      .add(() => this.loaderService.setInactive());
   }
 
   private search(value?: string): void {
 
-    this.loading = true;
+    this.loaderService.setActive();
 
     const request$ = !!this.searchResponse ? this.searchResponse.next() : this.searchService.searchByString(value);
     request$
@@ -114,7 +115,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
           this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: 3000 });
         },
       )
-      .add(() => this.loading = false);
+      .add(() => this.loaderService.setInactive());
   }
 
   private onSearchResponse(response: SearchResponse): void {
