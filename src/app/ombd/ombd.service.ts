@@ -18,9 +18,9 @@ export class OmbdService {
 
   constructor(private http: HttpClient) { }
 
-  searchByString(name: string, page = 1): Observable<SearchResponse> {
+  searchByString(term: string, page = 1): Observable<SearchResponse> {
 
-    if (name?.trim()?.length < MINIMUM_LENGTH) {
+    if (term?.trim()?.length < MINIMUM_LENGTH) {
       throw Error(`The provided search string should have at least ${MINIMUM_LENGTH} characters`);
     }
 
@@ -31,7 +31,7 @@ export class OmbdService {
         {
           params: {
             apikey: this.key,
-            s: name,
+            s: term,
             page: page.toString(),
           }
         }
@@ -41,13 +41,20 @@ export class OmbdService {
       switchMap((omdbResponse: OmdbResponse) => {
 
         if (omdbResponse.Response === 'True') {
+
+          const nextPage = (page * 10) < omdbResponse.totalResults ? page + 1 : -1;
+
           return of({
+            searchTerm: term,
             results: omdbResponse.Search.map(omdbr => ({
               title: omdbr.Title,
               imdbId: omdbr.imdbID,
             })),
             page,
-            nextPage: (page * 10) < omdbResponse.totalResults ? page + 1 : -1,
+            hasNext: () => nextPage !== -1,
+            next: () => {
+              return nextPage === -1 ? throwError('Should not happen') : this.searchByString(term, nextPage);
+            },
           });
         }
 

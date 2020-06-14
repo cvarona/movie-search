@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 export type OmdbResultType = 'movie' | 'series' | 'episode';
 
 export interface OmdbFullDetails {
@@ -65,7 +67,9 @@ export interface SearchResult {
 }
 
 export interface SearchResponse {
+  searchTerm: string;
   results: Array<SearchResult>;
   page: number;
-  nextPage: number;
+  hasNext: () => boolean;
+  next: () => Observable<SearchResponse>;
 }

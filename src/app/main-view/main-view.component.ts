@@ -23,12 +23,10 @@ export class MainViewComponent implements OnInit, OnDestroy {
   details: FullDetails;
   loading = false;
 
-  private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
   private nameInput = new Subject<string>();
 
-  private currentPage = 1;
-  private noMoreSearchResults = false;
-  private lastSearchTerm: string;
+  private searchResponse: SearchResponse;
+  private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
 
   private destroy$ = new Subject();
 
@@ -49,9 +47,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
         debounceTime(DEBOUNCE_TIME),
       )
       .subscribe((value: string) => {
-        this.currentPage = 1;
-        this.noMoreSearchResults = false;
-        this.lastSearchTerm = value;
+        this.searchResponse = null;
 
         const isFavorite = this.favoriteService.isFavorite(value);
         this.favoriteIcon = isFavorite ? 'star' : 'star_outline';
@@ -76,16 +72,17 @@ export class MainViewComponent implements OnInit, OnDestroy {
   }
 
   onScrollIndexChange(index: number) {
-    if (!this.noMoreSearchResults && index === ((this.currentPage - 1) * 10) + 4) {
+    if (this.searchResponse?.hasNext && index === ((this.searchResponse.page - 1) * 10) + 4) {
       console.log(`búsqueda disparada con index ${index}`);
-      this.currentPage++;
-      this.search(this.lastSearchTerm);
+      this.search();
     }
   }
 
   addFavorite() {
-    this.favoriteService.increment(this.lastSearchTerm);
-    this.favoriteIcon = 'star';
+    if (!!this.searchResponse) {
+      this.favoriteService.increment(this.searchResponse.searchTerm);
+      this.favoriteIcon = 'star';
+    }
   }
 
   incrementFavorite(term: string) {
@@ -102,10 +99,12 @@ export class MainViewComponent implements OnInit, OnDestroy {
       .add(() => this.loading = false);
   }
 
-  private search(value: string): void {
+  private search(value?: string): void {
 
     this.loading = true;
-    this.searchService.searchByString(value, this.currentPage)
+
+    const request$ = !!this.searchResponse ? this.searchResponse.next() : this.searchService.searchByString(value);
+    request$
       .subscribe(
         (response: SearchResponse) => this.onSearchResponse(response),
         (error: Response | string) => {
@@ -119,12 +118,10 @@ export class MainViewComponent implements OnInit, OnDestroy {
   }
 
   private onSearchResponse(response: SearchResponse): void {
-    if (response.page !== -1) {
-      const accumulatedSearchResults = this.searchResultEmitter.value.concat(response.results);
-      this.searchResultEmitter.next(accumulatedSearchResults);
-    } else if (this.currentPage > 1) {
-      // No more results for this term
-      this.noMoreSearchResults = true;
-    }
+
+    this.searchResponse = response;
+
+    const accumulatedSearchResults = this.searchResultEmitter.value.concat(response.results);
+    this.searchResultEmitter.next(accumulatedSearchResults);
   }
 }
