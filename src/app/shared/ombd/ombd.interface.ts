@@ -59,10 +59,7 @@ export interface FullDetails {
 }
 
 export interface SearchResult {
-  poster: string;
   title: string;
-  type: OmdbResultType;
-  year: string;
   imdbId: string;
 }
 

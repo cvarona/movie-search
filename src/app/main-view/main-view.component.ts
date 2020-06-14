@@ -1,17 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { OmbdService } from '../shared/ombd/ombd.service';
-import { FormControl } from '@angular/forms';
-import { takeUntil, debounce, debounceTime, filter } from 'rxjs/operators';
+import { takeUntil, debounceTime, filter } from 'rxjs/operators';
 import { SearchResult, SearchResponse, FullDetails } from '../shared/ombd/ombd.interface';
-import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { Favorite } from '../shared/favorites/favorite.interface';
+import { FavoriteService } from '../shared/favorites/favorite.service';
 
 const DEBOUNCE_TIME = 500;
-
-interface Favorite {
-  term: string;
-  count: number;
-}
 
 @Component({
   selector: 'app-main-view',
@@ -19,22 +14,28 @@ interface Favorite {
   styleUrls: ['./main-view.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
 })
-export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MainViewComponent implements OnInit, OnDestroy {
 
   results$: Observable<Array<SearchResult>>;
-  favorites$: Observable<Array<string>>;
+  favorites$: Observable<Array<Favorite>>;
+  favoriteIcon: 'star' | 'star_outline' = 'star_outline';
   details: FullDetails;
   loading = false;
 
   private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
-  private accumulatedFavorites = new BehaviorSubject<Array<Favorite>>([]);
   private nameInput = new Subject<string>();
-  private destroy$ = new Subject();
 
   private currentPage = 1;
   private noMoreSearchResults = false;
   private lastSearchTerm: string;
-  constructor(private searchService: OmbdService) {
+
+  private destroy$ = new Subject();
+
+  constructor(
+    private favoriteService: FavoriteService,
+    private searchService: OmbdService) {
+
+    this.favorites$ = this.favoriteService.topThree$;
   }
 
   ngOnInit(): void {
@@ -48,22 +49,23 @@ export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
         this.currentPage = 1;
         this.noMoreSearchResults = false;
         this.lastSearchTerm = value;
+
+        const isFavorite = this.favoriteService.isFavorite(value);
+        this.favoriteIcon = isFavorite ? 'star' : 'star_outline';
+        if (isFavorite) {
+          this.favoriteService.increment(value);
+        }
+
         this.details = null;
         this.searchResultEmitter.next([]);
         this.search(value);
       });
 
     this.results$ = this.searchResultEmitter.asObservable();
-
-
   }
 
   ngOnDestroy() {
     this.destroy$.next();
-  }
-
-  ngAfterViewInit() {
-
   }
 
   onInput(input: string) {
@@ -78,8 +80,11 @@ export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  addFavorite() {
-
+  addFavorite(changeIcon = false) {
+    this.favoriteService.increment(this.lastSearchTerm);
+    if (changeIcon) {
+      this.favoriteIcon = 'star';
+    }
   }
 
   showDetail(result: SearchResult) {

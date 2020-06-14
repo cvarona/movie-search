@@ -16,6 +16,27 @@
   flex-direction: row;
 }
 
+.upper-row {
+
+  & > * {
+    width: 300px;
+    margin: 5px;
+  }
+}
+
+.favorite-container {
+  display: flex;
+  flex-direction: row;
+  justify-items: center;
+  justify-content: space-between;
+}
+
+.favorite {
+  display: table-cell;
+  padding: 5px;
+  border: 1px solid black;
+}
+
 .lower-row {
   max-height: 200px;
 
@@ -39,7 +60,7 @@
 }
 
 .selected-search-result {
-  background-color: red;
+  background-color: lightseagreen;
 }
 
 .result-poster {

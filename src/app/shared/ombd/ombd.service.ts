@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { OmdbResponse, SearchResponse, OmdbFullDetails, FullDetails } from './ombd.interface';
 import { mokkedSearchResponse, mokkedDetail } from './omdb.mokks';
 
-const useMokks = true;
+const useMokks = false;
 const MINIMUM_LENGTH = 3;
 
 const NO_RESULTS = {
@@ -49,10 +49,7 @@ export class OmbdService {
         if (omdbResponse.Response === 'True') {
           return {
             results: omdbResponse.Search.map(omdbr => ({
-              poster: omdbr.Poster,
               title: omdbr.Title,
-              type: omdbr.Type,
-              year: omdbr.Year,
               imdbId: omdbr.imdbID,
             })),
             page,
@@ -96,7 +93,7 @@ export class OmbdService {
             plot: omdbFullDetails.Plot,
             language: omdbFullDetails.Language,
             country: omdbFullDetails.Country,
-            poster: omdbFullDetails.Poster,
+            poster: omdbFullDetails.Poster === 'N/A' ? null : omdbFullDetails.Poster,
             website: omdbFullDetails.Website,
             imdbId: omdbFullDetails.imdbID,
           };

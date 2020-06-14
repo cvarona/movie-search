@@ -7,11 +7,13 @@
       <mat-form-field appearance="outline">
         <mat-label>Search filter</mat-label>
         <input matInput (input)="onInput($event.target.value)" placeholder="Type at least three characters...">
-        <mat-icon matSuffix (click)="addFavorite()">star</mat-icon>
+        <mat-icon matSuffix (click)="addFavorite(true)">{{ favoriteIcon }}</mat-icon>
       </mat-form-field>
       <div>
         <h3>Your 3 most favorite searches</h3>
-        <div *ngFor="let favorite of favorites$ | async" class="favorite">{{ favorite }}</div>
+        <div class="favorite-container">
+          <div *ngFor="let favorite of favorites$ | async" class="favorite" (click)="addFavorite()">{{ favorite.term }}({{ favorite.count }})</div>
+        </div>
       </div>
     </div>
     <div class="layout-row lower-row">
@@ -30,7 +32,7 @@
         <ng-container *ngIf="!!details; else noSearchResultSelected">
           <h2>{{ details.title }}</h2>
           <h3>{{ details.year}} / {{ details.director }}</h3>
-          <img [src]="details.poster" alt="{{ details.title }} theatrical poster"
+          <img *ngIf="!!details.poster" [src]="details.poster" alt="{{ details.title }} theatrical poster"
             class="result-poster">
           <p>{{ details.plot }}</p>
         </ng-container>
