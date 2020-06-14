@@ -74,7 +74,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   onScrollIndexChange(index: number) {
     if (this.searchResponse?.hasNext && index === ((this.searchResponse.page - 1) * 10) + 4) {
-      console.log(`búsqueda disparada con index ${index}`);
       this.search();
     }
   }
