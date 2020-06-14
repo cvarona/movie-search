@@ -1,1 +1,27 @@
-<p>main-view works!</p>
+<div class="mat-app-background basic-container">
+    <mat-form-field appearance="outline">
+        <mat-label>Search by actor/actress</mat-label>
+        <input matInput (input)="onInput($event.target.value)" placeholder="Search...">
+        <mat-icon matSuffix (click)="addFavorite()">star</mat-icon>
+    </mat-form-field>
+    <cdk-virtual-scroll-viewport (scrolledIndexChange)="onScrollIndexChange($event)" class="result-list" itemSize="20">
+        <li *cdkVirtualFor="let result of results$ | async" (click)="showDetail(result)" class="search-result">
+            {{result.title}}</li>
+    </cdk-virtual-scroll-viewport>
+
+    <mat-card *ngIf="!!selectedResult" class="example-card">
+      <mat-card-header>
+        <mat-card-title>{{ selectedResult.title }}</mat-card-title>
+        <mat-card-subtitle>{{ selectedResult.year}}</mat-card-subtitle>
+      </mat-card-header>
+      <img mat-card-image [src]="selectedResult.poster" alt="{{ selectedResult.title }} theatrical poster" class="result-poster">
+      <mat-card-content>
+        <p>{{ selectedResult.plot }}</p>
+      </mat-card-content>
+    </mat-card>
+
+</div>
+<div *ngIf="loading" class="loader">
+  <mat-progress-spinner [mode]="'indeterminate'"></mat-progress-spinner>
+</div>
+
