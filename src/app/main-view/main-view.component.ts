@@ -83,11 +83,13 @@ export class MainViewComponent implements OnInit, OnDestroy {
     }
   }
 
-  addFavorite(changeIcon = false) {
+  addFavorite() {
     this.favoriteService.increment(this.lastSearchTerm);
-    if (changeIcon) {
-      this.favoriteIcon = 'star';
-    }
+    this.favoriteIcon = 'star';
+  }
+
+  incrementFavorite(term: string) {
+    this.favoriteService.increment(term);
   }
 
   showDetail(result: SearchResult) {

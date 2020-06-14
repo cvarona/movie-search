@@ -51,7 +51,8 @@ export class FavoriteService {
     this.sortFavorites(currentFavorites);
 
     this.storage.set(REPO_KEY, currentFavorites);
-    this.topThreeEmitter.next([...currentFavorites.slice(0, 3)]);
+    console.log(currentFavorites.slice(0, 3));
+    this.topThreeEmitter.next(currentFavorites.slice(0, 3));
   }
 
   topThree(): Array<Favorite> {
