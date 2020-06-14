@@ -55,6 +55,7 @@ export interface FullDetails {
   country: string;
   poster: string;
   website: string;
+  imdbId: string;
 }
 
 export interface SearchResult {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { OmbdService } from '../shared/ombd/ombd.service';
 import { FormControl } from '@angular/forms';
@@ -7,6 +7,11 @@ import { SearchResult, SearchResponse, FullDetails } from '../shared/ombd/ombd.i
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 
 const DEBOUNCE_TIME = 500;
+
+interface Favorite {
+  term: string;
+  count: number;
+}
 
 @Component({
   selector: 'app-main-view',
@@ -17,10 +22,12 @@ const DEBOUNCE_TIME = 500;
 export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
   results$: Observable<Array<SearchResult>>;
-  selectedResult: FullDetails;
+  favorites$: Observable<Array<string>>;
+  details: FullDetails;
   loading = false;
 
   private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
+  private accumulatedFavorites = new BehaviorSubject<Array<Favorite>>([]);
   private nameInput = new Subject<string>();
   private destroy$ = new Subject();
 
@@ -41,11 +48,14 @@ export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
         this.currentPage = 1;
         this.noMoreSearchResults = false;
         this.lastSearchTerm = value;
-        this.selectedResult = null;
+        this.details = null;
+        this.searchResultEmitter.next([]);
         this.search(value);
       });
 
     this.results$ = this.searchResultEmitter.asObservable();
+
+
   }
 
   ngOnDestroy() {
@@ -76,7 +86,7 @@ export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loading = true;
     this.searchService.searchById(result.imdbId)
       .subscribe(
-        (fullDetails: FullDetails) => this.selectedResult = fullDetails,
+        (fullDetails: FullDetails) => this.details = fullDetails,
         (error: Response) => console.log(error),
       )
       .add(() => this.loading = false);

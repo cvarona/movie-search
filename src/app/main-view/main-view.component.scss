@@ -34,7 +34,8 @@
   height: 30px;
   line-height: 30px;
   padding-left: 5px;
-  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .selected-search-result {
@@ -42,7 +43,9 @@
 }
 
 .result-poster {
-  height: 100px;
+  height: 180px;
+  float: left;
+  padding-right: 5px;
 }
 
 .loader {

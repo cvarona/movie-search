@@ -9,6 +9,10 @@
         <input matInput (input)="onInput($event.target.value)" placeholder="Type at least three characters...">
         <mat-icon matSuffix (click)="addFavorite()">star</mat-icon>
       </mat-form-field>
+      <div>
+        <h3>Your 3 most favorite searches</h3>
+        <div *ngFor="let favorite of favorites$ | async" class="favorite">{{ favorite }}</div>
+      </div>
     </div>
     <div class="layout-row lower-row">
       <div>
@@ -18,17 +22,17 @@
           itemSize="30">
           <div *cdkVirtualFor="let result of results$ | async"
             (click)="showDetail(result)"
-            [ngClass]="{'search-result': true, 'selected-search-result': selectedResult === result}">
+            [ngClass]="{'search-result': true, 'selected-search-result': details?.imdbId === result?.imdbId}">
             {{result.title}}</div>
         </cdk-virtual-scroll-viewport>
       </div>
       <div class="result-details">
-        <ng-container *ngIf="!!selectedResult; else noSearchResultSelected">
-          <h2>{{ selectedResult.title }}</h2>
-          <h3>{{ selectedResult.year}} / {{ selectedResult.director }}</h3>
-          <img [src]="selectedResult.poster" alt="{{ selectedResult.title }} theatrical poster"
+        <ng-container *ngIf="!!details; else noSearchResultSelected">
+          <h2>{{ details.title }}</h2>
+          <h3>{{ details.year}} / {{ details.director }}</h3>
+          <img [src]="details.poster" alt="{{ details.title }} theatrical poster"
             class="result-poster">
-          <p>{{ selectedResult.plot }}</p>
+          <p>{{ details.plot }}</p>
         </ng-container>
         <ng-template #noSearchResultSelected>
           <h2>[No search result selected]</h2>
