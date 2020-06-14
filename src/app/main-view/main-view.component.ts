@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { OmbdService } from '../shared/ombd/ombd.service';
+import { OmbdService } from '../ombd/ombd.service';
 import { takeUntil, debounceTime, filter } from 'rxjs/operators';
-import { SearchResult, SearchResponse, FullDetails } from '../shared/ombd/ombd.interface';
-import { Favorite } from '../shared/favorites/favorite.interface';
-import { FavoriteService } from '../shared/favorites/favorite.service';
+import { SearchResult, SearchResponse, FullDetails } from '../ombd/ombd.interface';
+import { Favorite } from '../favorites/favorite.interface';
+import { FavoriteService } from '../favorites/favorite.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 const DEBOUNCE_TIME = 500;
 
@@ -33,7 +34,9 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   constructor(
     private favoriteService: FavoriteService,
-    private searchService: OmbdService) {
+    private searchService: OmbdService,
+    private matSnackBar: MatSnackBar,
+  ) {
 
     this.favorites$ = this.favoriteService.topThree$;
   }
@@ -42,7 +45,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.nameInput.asObservable()
       .pipe(
         takeUntil(this.destroy$),
-        filter((name: string) => name?.length > 3),
+        filter((name: string) => name?.length >= 3),
         debounceTime(DEBOUNCE_TIME),
       )
       .subscribe((value: string) => {
@@ -103,7 +106,12 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.searchService.searchByString(value, this.currentPage)
       .subscribe(
         (response: SearchResponse) => this.onSearchResponse(response),
-        (error: Response) => console.error(error),
+        (error: Response | string) => {
+          console.error(error);
+
+          const display = (typeof error === 'string') ? error : (error as Response).statusText;
+          this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: 3000 });
+        },
       )
       .add(() => this.loading = false);
   }
@@ -115,8 +123,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
     } else if (this.currentPage > 1) {
       // No more results for this term
       this.noMoreSearchResults = true;
-    } else {
-      // TODO search that yields no results
     }
   }
 }

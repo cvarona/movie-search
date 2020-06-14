@@ -36,6 +36,7 @@ export interface OmdbResult {
 
 export interface OmdbResponse {
   Response: 'True' | 'False';
+  Error: string;
   Search: Array<OmdbResult>;
   totalResults: number;
 }

@@ -1,18 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { OmdbResponse, SearchResponse, OmdbFullDetails, FullDetails } from './ombd.interface';
 import { mokkedSearchResponse, mokkedDetail } from './omdb.mokks';
 
 const useMokks = false;
 const MINIMUM_LENGTH = 3;
-
-const NO_RESULTS = {
-  results: [],
-  page: -1,
-  nextPage: -1,
-};
 
 @Injectable({
   providedIn: 'root'
@@ -44,20 +38,20 @@ export class OmbdService {
       );
 
     return request$.pipe(
-      map((omdbResponse: OmdbResponse) => {
+      switchMap((omdbResponse: OmdbResponse) => {
 
         if (omdbResponse.Response === 'True') {
-          return {
+          return of({
             results: omdbResponse.Search.map(omdbr => ({
               title: omdbr.Title,
               imdbId: omdbr.imdbID,
             })),
             page,
             nextPage: (page * 10) < omdbResponse.totalResults ? page + 1 : -1,
-          };
+          });
         }
 
-        return NO_RESULTS;
+        return throwError(omdbResponse.Error);
       })
     );
   }
