@@ -1,27 +1,39 @@
-<div class="mat-app-background basic-container">
-    <mat-form-field appearance="outline">
-        <mat-label>Search by actor/actress</mat-label>
-        <input matInput (input)="onInput($event.target.value)" placeholder="Search...">
-        <mat-icon matSuffix (click)="addFavorite()">star</mat-icon>
-    </mat-form-field>
-    <cdk-virtual-scroll-viewport (scrolledIndexChange)="onScrollIndexChange($event)" class="result-list" itemSize="20">
-        <li *cdkVirtualFor="let result of results$ | async" (click)="showDetail(result)" class="search-result">
-            {{result.title}}</li>
-    </cdk-virtual-scroll-viewport>
-
-    <mat-card *ngIf="!!selectedResult" class="example-card">
-      <mat-card-header>
-        <mat-card-title>{{ selectedResult.title }}</mat-card-title>
-        <mat-card-subtitle>{{ selectedResult.year}}</mat-card-subtitle>
-      </mat-card-header>
-      <img mat-card-image [src]="selectedResult.poster" alt="{{ selectedResult.title }} theatrical poster" class="result-poster">
-      <mat-card-content>
-        <p>{{ selectedResult.plot }}</p>
-      </mat-card-content>
-    </mat-card>
-
-</div>
 <div *ngIf="loading" class="loader">
   <mat-progress-spinner [mode]="'indeterminate'"></mat-progress-spinner>
 </div>
-
+<div class="mat-app-background basic-container">
+  <div class="layout-rows">
+    <div class="layout-row upper-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Search filter</mat-label>
+        <input matInput (input)="onInput($event.target.value)" placeholder="Type at least three characters...">
+        <mat-icon matSuffix (click)="addFavorite()">star</mat-icon>
+      </mat-form-field>
+    </div>
+    <div class="layout-row lower-row">
+      <div>
+        <h2>Search results</h2>
+        <h3>Movies, series, episodes</h3>
+        <cdk-virtual-scroll-viewport (scrolledIndexChange)="onScrollIndexChange($event)" class="result-list"
+          itemSize="30">
+          <div *cdkVirtualFor="let result of results$ | async"
+            (click)="showDetail(result)"
+            [ngClass]="{'search-result': true, 'selected-search-result': selectedResult === result}">
+            {{result.title}}</div>
+        </cdk-virtual-scroll-viewport>
+      </div>
+      <div class="result-details">
+        <ng-container *ngIf="!!selectedResult; else noSearchResultSelected">
+          <h2>{{ selectedResult.title }}</h2>
+          <h3>{{ selectedResult.year}} / {{ selectedResult.director }}</h3>
+          <img [src]="selectedResult.poster" alt="{{ selectedResult.title }} theatrical poster"
+            class="result-poster">
+          <p>{{ selectedResult.plot }}</p>
+        </ng-container>
+        <ng-template #noSearchResultSelected>
+          <h2>[No search result selected]</h2>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

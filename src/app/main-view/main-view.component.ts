@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { OmbdService } from '../shared/ombd/ombd.service';
 import { FormControl } from '@angular/forms';
@@ -11,7 +11,8 @@ const DEBOUNCE_TIME = 500;
 @Component({
   selector: 'app-main-view',
   templateUrl: './main-view.component.html',
-  styleUrls: ['./main-view.component.scss']
+  styleUrls: ['./main-view.component.scss'],
+  encapsulation: ViewEncapsulation.Emulated,
 })
 export class MainViewComponent implements OnInit, OnDestroy, AfterViewInit {
 
