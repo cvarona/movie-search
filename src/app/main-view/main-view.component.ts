@@ -94,7 +94,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.searchService.searchById(result.imdbId)
       .subscribe(
         (fullDetails: FullDetails) => this.details = fullDetails,
-        (error: Response) => console.log(error),
+        (error: Response | string) => this.showError(error),
       )
       .add(() => this.loaderService.setInactive());
   }
@@ -107,14 +107,15 @@ export class MainViewComponent implements OnInit, OnDestroy {
     request$
       .subscribe(
         (response: SearchResponse) => this.onSearchResponse(response),
-        (error: Response | string) => {
-          console.error(error);
-
-          const display = (typeof error === 'string') ? error : (error as Response).statusText;
-          this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: 3000 });
-        },
+        (error: Response | string) => this.showError(error),
       )
       .add(() => this.loaderService.setInactive());
+  }
+
+  private showError(error: string | Response) {
+    console.error(error);
+    const display = (typeof error === 'string') ? error : (error as Response).statusText;
+    this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: 3000 });
   }
 
   private onSearchResponse(response: SearchResponse): void {

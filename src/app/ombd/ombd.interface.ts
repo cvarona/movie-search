@@ -26,6 +26,7 @@ export interface OmdbFullDetails {
   Production: string;
   Website: string;
   Response: 'True' | 'False';
+  Error: string;
 }
 
 export interface OmdbResult {

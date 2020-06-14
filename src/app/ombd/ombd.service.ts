@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { OmdbResponse, SearchResponse, OmdbFullDetails, FullDetails } from './ombd.interface';
 import { mokkedSearchResponse, mokkedDetail } from './omdb.mokks';
 
@@ -78,10 +78,10 @@ export class OmbdService {
       );
 
     return request$.pipe(
-      map((omdbFullDetails: OmdbFullDetails) => {
+      switchMap((omdbFullDetails: OmdbFullDetails) => {
 
         if (omdbFullDetails.Response === 'True') {
-          return {
+          return of({
             title: omdbFullDetails.Title,
             year: omdbFullDetails.Year,
             rated: omdbFullDetails.Rated,
@@ -97,10 +97,10 @@ export class OmbdService {
             poster: omdbFullDetails.Poster === 'N/A' ? null : omdbFullDetails.Poster,
             website: omdbFullDetails.Website,
             imdbId: omdbFullDetails.imdbID,
-          };
+          });
         }
 
-        return null;
+        return throwError(omdbFullDetails.Error);
       })
     );
   }
