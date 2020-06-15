@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
+/**
+ * Rudimentary service for handling the displaying of progress spinner
+ */
 @Injectable({
   providedIn: 'root'
 })

@@ -25,21 +25,37 @@ type FavoriteIcon = 'star' | 'star_outline';
 })
 export class MainViewComponent implements OnInit, OnDestroy {
 
+  // We need a reference to the result list viewport in order to handle scrolling
   @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
 
+  // Result list (obtained by typing in the search field)
   results$: Observable<Array<SearchResult>>;
-  favorites$: Observable<Array<Favorite>>;
-  favoriteIcon$: Observable<FavoriteIcon>;
+
+  // Result detail (obtained by clicking on a search result)
   details$: Observable<FullDetails>;
 
-  private nameInput = new Subject<string>();
+  // Three most favorite search terms, obtained from the favorite service
+  favorites$: Observable<Array<Favorite>>;
 
+  // Favorite icon rendered next to the search term input field
+  favoriteIcon$: Observable<FavoriteIcon>;
+
+  // Used to collect and debounce the search term typed by the user
+  private searchTermInput = new Subject<string>();
+
+  // Last search response obtained
   private searchResponse: SearchResponse;
+
+  // Used to populate the result search list by accumulation
   private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
 
+  // Used to handle search result selection
   private searchResultDetailsEmitter = new BehaviorSubject<FullDetails>(null);
+
+  // Used to change the favorite icon next to the search term input field
   private favoriteIconEmitter = new BehaviorSubject<FavoriteIcon>('star_outline');
 
+  // Used to do some cleanup when leaving the page
   private destroy$ = new Subject();
 
   constructor(
@@ -49,33 +65,45 @@ export class MainViewComponent implements OnInit, OnDestroy {
     private matSnackBar: MatSnackBar,
   ) {
 
+    // Observable initialization
     this.favorites$ = this.favoriteService.topThree$;
     this.favoriteIcon$ = this.favoriteIconEmitter.asObservable();
     this.details$ = this.searchResultDetailsEmitter.asObservable();
+    this.results$ = this.searchResultEmitter.asObservable();
   }
 
   ngOnInit(): void {
-    this.nameInput.asObservable()
+    // We are required to search as the user types in the search term
+    // input field; in order to do that we create a debounced observable
+    // from the search term subject, which we'll be feeding with raw user input
+    this.searchTermInput.asObservable()
       .pipe(
         takeUntil(this.destroy$),
-        filter((name: string) => name?.length >= MINIMUM_SEARCH_TERM_LENGTH),
+        filter((name: string) => name?.trim()?.length >= MINIMUM_SEARCH_TERM_LENGTH),
         debounceTime(DEBOUNCE_TIME),
       )
       .subscribe((value: string) => {
+
+        // Once we have a valid search term we reset the search response...
         this.searchResponse = null;
 
+        // ...assess whether it's a favorite search term in order to visually
+        // display it as such by means of an icon...
         const isFavorite = this.favoriteService.isFavorite(value);
         this.favoriteIconEmitter.next(isFavorite ? 'star' : 'star_outline');
         if (isFavorite) {
+          // Don't forget to increment the times this favorite search term
+          // has been used!
           this.favoriteService.increment(value);
         }
 
+        // ...clean the selected result details and the search result list...
         this.searchResultDetailsEmitter.next(null);
         this.searchResultEmitter.next([]);
+
+        // ...and finaly do the search
         this.search(value);
       });
-
-    this.results$ = this.searchResultEmitter.asObservable();
   }
 
   ngOnDestroy() {
@@ -83,7 +111,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
   }
 
   onInput(input: string) {
-    this.nameInput.next(input);
+    this.searchTermInput.next(input);
   }
 
   onScrollIndexChange() {
@@ -91,6 +119,9 @@ export class MainViewComponent implements OnInit, OnDestroy {
     const renderedRange = this.viewport.getRenderedRange().end;
     const totalDataLength = this.viewport.getDataLength();
 
+    // If the user scrolls to the end of the available search results and
+    // the last search response says there are more pages to be retrieved,
+    // we go for it
     if (this.searchResponse?.hasNext && renderedRange === totalDataLength) {
       this.search();
     }
@@ -98,7 +129,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   addFavorite() {
     if (!!this.searchResponse) {
-      this.favoriteService.increment(this.searchResponse.searchTerm);
+      this.incrementFavorite(this.searchResponse.searchTerm);
       this.favoriteIconEmitter.next('star');
     }
   }
@@ -111,6 +142,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
     return this.searchResultDetailsEmitter.value?.imdbId === result?.imdbId;
   }
 
+  // Requests a search result's details
   showDetail(result: SearchResult) {
     this.loaderService.setActive();
     this.searchService.searchById(result.imdbId)
@@ -121,11 +153,15 @@ export class MainViewComponent implements OnInit, OnDestroy {
       .add(() => this.loaderService.setInactive());
   }
 
-  private search(value?: string): void {
+  // Requests a list of matching values for the specified search term
+  private search(term?: string): void {
 
     this.loaderService.setActive();
 
-    const request$ = !!this.searchResponse ? this.searchResponse.next() : this.searchService.searchByString(value);
+    // If we already have a previous search response, we'll request the next page (when
+    // this happens we'll receive no term input parameter); otherwise a new search is
+    // done.
+    const request$ = !!this.searchResponse ? this.searchResponse.next() : this.searchService.searchByString(term);
     request$
       .subscribe(
         (response: SearchResponse) => this.onSearchResponse(response),
@@ -142,6 +178,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   private onSearchResponse(response: SearchResponse): void {
 
+    // We keep the received response, then emit the results for the search result list to load them
     this.searchResponse = response;
 
     const accumulatedSearchResults = this.searchResultEmitter.value.concat(response.results);

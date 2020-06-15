@@ -5,6 +5,9 @@ import { Observable, BehaviorSubject } from 'rxjs';
 
 const REPO_KEY = 'movie-search-favorites';
 
+/**
+ * Provides favorite search terms management
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -15,6 +18,7 @@ export class FavoriteService {
   private topThreeEmitter: BehaviorSubject<Array<Favorite>>;
 
   constructor(
+    // We use this to remember favorites from one page visit to another
     @Inject(LOCAL_STORAGE) private storage: StorageService) {
 
     this.topThreeEmitter = new BehaviorSubject(this.topThree());
@@ -25,21 +29,8 @@ export class FavoriteService {
     return !!this.retrieveFavorites().find(f => f.term === term);
   }
 
-  store(favorite: Favorite): void {
-    const currentFavorites: Array<Favorite> = this.storage.get(REPO_KEY) || [];
-
-    const previouslyExisting: Favorite = currentFavorites.find(f => f.term === favorite.term);
-    if (!!previouslyExisting) {
-      previouslyExisting.count = favorite.count;
-    } else {
-      currentFavorites.push(favorite);
-    }
-
-    this.storage.set(REPO_KEY, currentFavorites);
-  }
-
   increment(favorite: string) {
-    const currentFavorites: Array<Favorite> = this.storage.get(REPO_KEY) || [];
+    const currentFavorites: Array<Favorite> = this.retrieveFavorites();
 
     const previouslyExisting: Favorite = currentFavorites.find(f => f.term === favorite);
     if (!!previouslyExisting) {
@@ -51,7 +42,6 @@ export class FavoriteService {
     this.sortFavorites(currentFavorites);
 
     this.storage.set(REPO_KEY, currentFavorites);
-    console.log(currentFavorites.slice(0, 3));
     this.topThreeEmitter.next(currentFavorites.slice(0, 3));
   }
 

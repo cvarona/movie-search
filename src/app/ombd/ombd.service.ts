@@ -7,6 +7,9 @@ import { mokkedSearchResponse, mokkedDetail } from './omdb.mokks';
 
 const useMokks = false;
 
+/**
+ * Provides access to the remote omdb api
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -17,6 +20,7 @@ export class OmbdService {
 
   constructor(private http: HttpClient) { }
 
+  // The omdb accepts 1-based page indexes for term searches
   searchByString(term: string, page = 1): Observable<SearchResponse> {
 
     if (term?.trim()?.length < MINIMUM_SEARCH_TERM_LENGTH) {
@@ -39,8 +43,12 @@ export class OmbdService {
     return request$.pipe(
       switchMap((omdbResponse: OmdbResponse) => {
 
+        // 'True' means that the search has succeeded and
+        // has yielded at least one result
         if (omdbResponse.Response === 'True') {
 
+          // We compute the next page and translate the omdb response property
+          // names into those of the movie-search app
           const nextPage = (page * 10) < omdbResponse.totalResults ? page + 1 : -1;
 
           return of({
@@ -57,6 +65,9 @@ export class OmbdService {
           });
         }
 
+        // Response 'False' means that something has been wrong or that the search yields no
+        // results; since we'll be visually handling the latter the same as an error, we translate
+        // both into an error emission
         return throwError(omdbResponse.Error);
       })
     );

@@ -2,6 +2,10 @@ import { Observable } from 'rxjs';
 
 export type OmdbResultType = 'movie' | 'series' | 'episode';
 
+/**
+ * The search by id/name result data structure provided
+ * by the omdb, as guessed from testing
+ */
 export interface OmdbFullDetails {
   Title: string;
   Year: string;
@@ -29,6 +33,7 @@ export interface OmdbFullDetails {
   Error: string;
 }
 
+// Same as above for term searches
 export interface OmdbResult {
   Poster: string;
   Title: string;
@@ -44,6 +49,7 @@ export interface OmdbResponse {
   totalResults: number;
 }
 
+/** The movie search app's own result search details data structure */
 export interface FullDetails {
   title: string;
   year: string;
@@ -62,6 +68,7 @@ export interface FullDetails {
   imdbId: string;
 }
 
+// Same as above for term searches
 export interface SearchResult {
   title: string;
   imdbId: string;
