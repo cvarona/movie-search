@@ -3,7 +3,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Search filter</mat-label>
         <input matInput (input)="onInput($event.target.value)" placeholder="Type at least three characters...">
-        <mat-icon matSuffix (click)="addFavorite()">{{ favoriteIcon }}</mat-icon>
+        <mat-icon matSuffix (click)="addFavorite()">{{ favoriteIcon$ | async }}</mat-icon>
       </mat-form-field>
       <div>
         <h3>Your 3 most favorite searches</h3>
@@ -16,16 +16,16 @@
       <div>
         <h2>Search results</h2>
         <h3>Movies, series, episodes</h3>
-        <cdk-virtual-scroll-viewport (scrolledIndexChange)="onScrollIndexChange($event)" class="result-list"
+        <cdk-virtual-scroll-viewport (scrolledIndexChange)="onScrollIndexChange()" class="result-list"
           itemSize="30">
           <div *cdkVirtualFor="let result of results$ | async"
             (click)="showDetail(result)"
-            [ngClass]="{'search-result': true, 'selected-search-result': details?.imdbId === result?.imdbId}">
+            [ngClass]="{'search-result': true, 'selected-search-result': isSelected(result)}">
             {{result.title}}</div>
         </cdk-virtual-scroll-viewport>
       </div>
       <div class="result-details">
-        <ng-container *ngIf="!!details; else noSearchResultSelected">
+        <ng-container *ngIf="details$ | async as details; else noSearchResultSelected">
           <h2>{{ details.title }}</h2>
           <h3>{{ details.year}} / {{ details.director }}</h3>
           <img *ngIf="!!details.poster" [src]="details.poster" alt="{{ details.title }} theatrical poster"

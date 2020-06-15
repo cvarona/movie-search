@@ -42,12 +42,12 @@
 
 .result-list {
   width: 300px;
-  height: 180px;
+  height: 180px; // We use a fixed-size rendering strategy and want to display six items
   border: 1px solid black;
 }
 
 .search-result {
-  height: 30px;
+  height: 30px; // See comment above
   line-height: 30px;
   padding-left: 5px;
   white-space: nowrap;

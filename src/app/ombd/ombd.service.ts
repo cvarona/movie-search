@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { OmdbResponse, SearchResponse, OmdbFullDetails, FullDetails } from './ombd.interface';
+import { OmdbResponse, SearchResponse, OmdbFullDetails, FullDetails, MINIMUM_SEARCH_TERM_LENGTH } from './ombd.interface';
 import { mokkedSearchResponse, mokkedDetail } from './omdb.mokks';
 
 const useMokks = false;
-const MINIMUM_LENGTH = 3;
 
 @Injectable({
   providedIn: 'root'
@@ -20,8 +19,8 @@ export class OmbdService {
 
   searchByString(term: string, page = 1): Observable<SearchResponse> {
 
-    if (term?.trim()?.length < MINIMUM_LENGTH) {
-      throw Error(`The provided search string should have at least ${MINIMUM_LENGTH} characters`);
+    if (term?.trim()?.length < MINIMUM_SEARCH_TERM_LENGTH) {
+      throw Error(`The provided search string should have at least ${MINIMUM_SEARCH_TERM_LENGTH} characters`);
     }
 
     const request$: Observable<OmdbResponse> = useMokks ?

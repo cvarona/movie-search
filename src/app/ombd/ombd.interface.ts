@@ -74,3 +74,5 @@ export interface SearchResponse {
   hasNext: () => boolean;
   next: () => Observable<SearchResponse>;
 }
+
+export const MINIMUM_SEARCH_TERM_LENGTH = 3;

@@ -1,32 +1,44 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { OmbdService } from '../ombd/ombd.service';
 import { takeUntil, debounceTime, filter } from 'rxjs/operators';
-import { SearchResult, SearchResponse, FullDetails } from '../ombd/ombd.interface';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { MatSnackBar } from '@angular/material/snack-bar';
+
+import { OmbdService } from '../ombd/ombd.service';
+import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, SearchResponse, FullDetails } from '../ombd/ombd.interface';
 import { Favorite } from '../favorites/favorite.interface';
 import { FavoriteService } from '../favorites/favorite.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { LoaderService } from '../loader.service';
 
 const DEBOUNCE_TIME = 500;
+const ERROR_SNACK_DURATION = 3000;
+const GENERIC_ERROR_MSG = 'Oops! Something went wrong';
+
+type FavoriteIcon = 'star' | 'star_outline';
 
 @Component({
   selector: 'app-main-view',
   templateUrl: './main-view.component.html',
   styleUrls: ['./main-view.component.scss'],
   encapsulation: ViewEncapsulation.Emulated,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainViewComponent implements OnInit, OnDestroy {
 
+  @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
+
   results$: Observable<Array<SearchResult>>;
   favorites$: Observable<Array<Favorite>>;
-  favoriteIcon: 'star' | 'star_outline' = 'star_outline';
-  details: FullDetails;
+  favoriteIcon$: Observable<FavoriteIcon>;
+  details$: Observable<FullDetails>;
 
   private nameInput = new Subject<string>();
 
   private searchResponse: SearchResponse;
   private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
+
+  private searchResultDetailsEmitter = new BehaviorSubject<FullDetails>(null);
+  private favoriteIconEmitter = new BehaviorSubject<FavoriteIcon>('star_outline');
 
   private destroy$ = new Subject();
 
@@ -38,25 +50,27 @@ export class MainViewComponent implements OnInit, OnDestroy {
   ) {
 
     this.favorites$ = this.favoriteService.topThree$;
+    this.favoriteIcon$ = this.favoriteIconEmitter.asObservable();
+    this.details$ = this.searchResultDetailsEmitter.asObservable();
   }
 
   ngOnInit(): void {
     this.nameInput.asObservable()
       .pipe(
         takeUntil(this.destroy$),
-        filter((name: string) => name?.length >= 3),
+        filter((name: string) => name?.length >= MINIMUM_SEARCH_TERM_LENGTH),
         debounceTime(DEBOUNCE_TIME),
       )
       .subscribe((value: string) => {
         this.searchResponse = null;
 
         const isFavorite = this.favoriteService.isFavorite(value);
-        this.favoriteIcon = isFavorite ? 'star' : 'star_outline';
+        this.favoriteIconEmitter.next(isFavorite ? 'star' : 'star_outline');
         if (isFavorite) {
           this.favoriteService.increment(value);
         }
 
-        this.details = null;
+        this.searchResultDetailsEmitter.next(null);
         this.searchResultEmitter.next([]);
         this.search(value);
       });
@@ -72,8 +86,12 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.nameInput.next(input);
   }
 
-  onScrollIndexChange(index: number) {
-    if (this.searchResponse?.hasNext && index === ((this.searchResponse.page - 1) * 10) + 4) {
+  onScrollIndexChange() {
+
+    const renderedRange = this.viewport.getRenderedRange().end;
+    const totalDataLength = this.viewport.getDataLength();
+
+    if (this.searchResponse?.hasNext && renderedRange === totalDataLength) {
       this.search();
     }
   }
@@ -81,7 +99,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
   addFavorite() {
     if (!!this.searchResponse) {
       this.favoriteService.increment(this.searchResponse.searchTerm);
-      this.favoriteIcon = 'star';
+      this.favoriteIconEmitter.next('star');
     }
   }
 
@@ -89,11 +107,15 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.favoriteService.increment(term);
   }
 
+  isSelected(result: SearchResult) {
+    return this.searchResultDetailsEmitter.value?.imdbId === result?.imdbId;
+  }
+
   showDetail(result: SearchResult) {
     this.loaderService.setActive();
     this.searchService.searchById(result.imdbId)
       .subscribe(
-        (fullDetails: FullDetails) => this.details = fullDetails,
+        (fullDetails: FullDetails) => this.searchResultDetailsEmitter.next(fullDetails),
         (error: Response | string) => this.showError(error),
       )
       .add(() => this.loaderService.setInactive());
@@ -114,8 +136,8 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   private showError(error: string | Response) {
     console.error(error);
-    const display = (typeof error === 'string') ? error : (error as Response).statusText;
-    this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: 3000 });
+    const display = (typeof error === 'string') ? error : (error as Response).statusText || GENERIC_ERROR_MSG;
+    this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: ERROR_SNACK_DURATION });
   }
 
   private onSearchResponse(response: SearchResponse): void {
