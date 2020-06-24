@@ -1,8 +1,10 @@
-import { Inject, Injectable, ViewChild } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { LOCAL_STORAGE, StorageService } from 'ngx-webstorage-service';
 import { Favorite } from './favorite.interface';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { map, filter } from 'rxjs/operators';
 
+const MAX_FAVORITES = 10;
 const REPO_KEY = 'movie-search-favorites';
 
 @Injectable({
@@ -12,62 +14,53 @@ export class FavoriteService {
 
   topThree$: Observable<Array<Favorite>>;
 
-  private topThreeEmitter: BehaviorSubject<Array<Favorite>>;
+  private favoriteEmitter: BehaviorSubject<Array<Favorite>>;
 
   constructor(
     @Inject(LOCAL_STORAGE) private storage: StorageService) {
 
-    this.topThreeEmitter = new BehaviorSubject(this.topThree());
-    this.topThree$ = this.topThreeEmitter.asObservable();
+    this.favoriteEmitter = new BehaviorSubject(this.retrieveFavorites());
+    this.topThree$ = this.favoriteEmitter.asObservable()
+      .pipe(
+        filter((favorites: Array<Favorite>) => !!favorites),
+        map((favorites: Array<Favorite>) => this.sortFavorites(favorites).slice(0, 3)),
+      );
   }
 
   isFavorite(term: string) {
-    return !!this.retrieveFavorites().find(f => f.term === term);
-  }
-
-  store(favorite: Favorite): void {
-    const currentFavorites: Array<Favorite> = this.storage.get(REPO_KEY) || [];
-
-    const previouslyExisting: Favorite = currentFavorites.find(f => f.term === favorite.term);
-    if (!!previouslyExisting) {
-      previouslyExisting.count = favorite.count;
-    } else {
-      currentFavorites.push(favorite);
-    }
-
-    this.storage.set(REPO_KEY, currentFavorites);
+    return !!this.favoriteEmitter.value.find(f => f.term === term);
   }
 
   increment(favorite: string) {
-    const currentFavorites: Array<Favorite> = this.storage.get(REPO_KEY) || [];
+
+    let currentFavorites: Array<Favorite> = this.favoriteEmitter.value;
 
     const previouslyExisting: Favorite = currentFavorites.find(f => f.term === favorite);
     if (!!previouslyExisting) {
+
       previouslyExisting.count++;
+
     } else {
+
+      if (currentFavorites.length >= MAX_FAVORITES) {
+        currentFavorites = this.sortFavorites(currentFavorites).slice(0, MAX_FAVORITES);
+      }
+
       currentFavorites.push({ term: favorite, count: 1 });
     }
 
-    this.sortFavorites(currentFavorites);
-
-    this.storage.set(REPO_KEY, currentFavorites);
-    console.log(currentFavorites.slice(0, 3));
-    this.topThreeEmitter.next(currentFavorites.slice(0, 3));
+    this.favoriteEmitter.next(currentFavorites);
   }
 
-  topThree(): Array<Favorite> {
-
-    const currentFavorites: Array<Favorite> = this.retrieveFavorites();
-    currentFavorites.sort((f1: Favorite, f2: Favorite) => f1.count > f2.count ? -1 : (f1.count < f2.count) ? 1 : 0);
-
-    return currentFavorites.slice(0, 3);
+  store(): void {
+    this.storage.set(REPO_KEY, this.favoriteEmitter.value);
   }
 
   private retrieveFavorites(): Array<Favorite> {
-    return this.storage.get(REPO_KEY) || [];
+    return this.sortFavorites(this.storage.get(REPO_KEY) || []).slice(0, MAX_FAVORITES);
   }
 
-  private sortFavorites(currentFavorites: Favorite[]) {
-    currentFavorites.sort((f1: Favorite, f2: Favorite) => f1.count > f2.count ? -1 : (f1.count < f2.count) ? 1 : 0);
+  private sortFavorites(currentFavorites: Favorite[]): Favorite[] {
+    return [...currentFavorites].sort((f1: Favorite, f2: Favorite) => f1.count > f2.count ? -1 : (f1.count < f2.count) ? 1 : 0);
   }
 }

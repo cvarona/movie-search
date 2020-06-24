@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { OmbdService } from '../ombd/ombd.service';
 import { takeUntil, debounceTime, filter } from 'rxjs/operators';
@@ -66,6 +66,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.destroy$.next();
+    this.favoriteService.store();
   }
 
   onInput(input: string) {
@@ -97,6 +98,13 @@ export class MainViewComponent implements OnInit, OnDestroy {
         (error: Response | string) => this.showError(error),
       )
       .add(() => this.loaderService.setInactive());
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  doCleanup($event) {
+    // ngOnDestroy won't get invoked if the user closes the window or tab, or types
+    // another location in the url bar
+    this.ngOnDestroy();
   }
 
   private search(value?: string): void {
