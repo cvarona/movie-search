@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil, debounceTime, filter } from 'rxjs/operators';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -108,6 +108,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.destroy$.next();
+    this.favoriteService.store();
   }
 
   onInput(input: string) {
@@ -153,8 +154,14 @@ export class MainViewComponent implements OnInit, OnDestroy {
       .add(() => this.loaderService.setInactive());
   }
 
-  // Requests a list of matching values for the specified search term
-  private search(term?: string): void {
+  @HostListener('window:beforeunload', ['$event'])
+  doCleanup($event) {
+    // ngOnDestroy won't get invoked if the user closes the window or tab, or types
+    // another location in the url bar
+    this.ngOnDestroy();
+  }
+
+  private search(value?: string): void {
 
     this.loaderService.setActive();
 
