@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil, debounceTime, filter } from 'rxjs/operators';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -161,7 +161,7 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.ngOnDestroy();
   }
 
-  private search(value?: string): void {
+  private search(term?: string): void {
 
     this.loaderService.setActive();
 
