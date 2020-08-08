@@ -1,6 +1,9 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
+import { StoreModule } from '@ngrx/store';
+import { mainReducer } from './main.reducer';
+
 import { AppComponent } from './app.component';
 import { MainViewComponent } from './main-view/main-view.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -13,6 +16,9 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { EffectsModule } from '@ngrx/effects';
+import { MainEffects } from './main.effects';
+import { debug } from './debug.reducer';
 
 @NgModule({
   declarations: [
@@ -31,6 +37,8 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     MatProgressSpinnerModule,
     MatSnackBarModule,
     ScrollingModule,
+    StoreModule.forRoot({ main: mainReducer }, { metaReducers: [debug]}),
+    EffectsModule.forRoot([MainEffects]),
   ],
   providers: [],
   bootstrap: [AppComponent]

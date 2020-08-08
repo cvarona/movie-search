@@ -20,7 +20,7 @@
           itemSize="30">
           <div *cdkVirtualFor="let result of results$ | async"
             (click)="showDetail(result)"
-            [ngClass]="{'search-result': true, 'selected-search-result': isSelected(result)}">
+            [ngClass]="{'search-result': true }">
             {{result.title}}</div>
         </cdk-virtual-scroll-viewport>
       </div>

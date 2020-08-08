@@ -1,14 +1,17 @@
 import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { takeUntil, debounceTime, filter } from 'rxjs/operators';
+import { takeUntil, debounceTime, filter, take } from 'rxjs/operators';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { OmbdService } from '../ombd/ombd.service';
-import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, SearchResponse, FullDetails } from '../ombd/ombd.interface';
+import { Store, select } from '@ngrx/store';
+
+import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, FullDetails } from '../ombd/ombd.interface';
 import { Favorite } from '../favorites/favorite.interface';
 import { FavoriteService } from '../favorites/favorite.service';
-import { LoaderService } from '../loader.service';
+import { MainState, AppState } from '../state';
+import { search, loadMore, selectResult } from '../main.actions';
+import { resultDetailsSelector, searchResultsSelector, searchTermSelector } from '../main.selectors';
 
 const DEBOUNCE_TIME = 500;
 const ERROR_SNACK_DURATION = 3000;
@@ -43,15 +46,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
   // Used to collect and debounce the search term typed by the user
   private searchTermInput = new Subject<string>();
 
-  // Last search response obtained
-  private searchResponse: SearchResponse;
-
-  // Used to populate the result search list by accumulation
-  private searchResultEmitter = new BehaviorSubject<Array<SearchResult>>([]);
-
-  // Used to handle search result selection
-  private searchResultDetailsEmitter = new BehaviorSubject<FullDetails>(null);
-
   // Used to change the favorite icon next to the search term input field
   private favoriteIconEmitter = new BehaviorSubject<FavoriteIcon>('star_outline');
 
@@ -59,17 +53,17 @@ export class MainViewComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject();
 
   constructor(
+    private store: Store<AppState>,
     private favoriteService: FavoriteService,
-    private loaderService: LoaderService,
-    private searchService: OmbdService,
     private matSnackBar: MatSnackBar,
   ) {
 
     // Observable initialization
     this.favorites$ = this.favoriteService.topThree$;
     this.favoriteIcon$ = this.favoriteIconEmitter.asObservable();
-    this.details$ = this.searchResultDetailsEmitter.asObservable();
-    this.results$ = this.searchResultEmitter.asObservable();
+
+    this.results$ = this.store.pipe(select(searchResultsSelector));
+    this.details$ = this.store.pipe(select(resultDetailsSelector));
   }
 
   ngOnInit(): void {
@@ -84,9 +78,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
       )
       .subscribe((value: string) => {
 
-        // Once we have a valid search term we reset the search response...
-        this.searchResponse = null;
-
         // ...assess whether it's a favorite search term in order to visually
         // display it as such by means of an icon...
         const isFavorite = this.favoriteService.isFavorite(value);
@@ -97,12 +88,8 @@ export class MainViewComponent implements OnInit, OnDestroy {
           this.favoriteService.increment(value);
         }
 
-        // ...clean the selected result details and the search result list...
-        this.searchResultDetailsEmitter.next(null);
-        this.searchResultEmitter.next([]);
-
         // ...and finaly do the search
-        this.search(value);
+        this.store.dispatch(search({ searchTerm: value }));
       });
   }
 
@@ -123,35 +110,27 @@ export class MainViewComponent implements OnInit, OnDestroy {
     // If the user scrolls to the end of the available search results and
     // the last search response says there are more pages to be retrieved,
     // we go for it
-    if (this.searchResponse?.hasNext && renderedRange === totalDataLength) {
-      this.search();
+    if (!!renderedRange && renderedRange === totalDataLength) {
+      this.store.dispatch(loadMore());
     }
   }
 
   addFavorite() {
-    if (!!this.searchResponse) {
-      this.incrementFavorite(this.searchResponse.searchTerm);
-      this.favoriteIconEmitter.next('star');
-    }
+    this.store.select(searchTermSelector).pipe(take(1)).subscribe(
+      (term: string) => {
+        this.incrementFavorite(term);
+        this.favoriteIconEmitter.next('star');
+      }
+    );
   }
 
   incrementFavorite(term: string) {
     this.favoriteService.increment(term);
   }
 
-  isSelected(result: SearchResult) {
-    return this.searchResultDetailsEmitter.value?.imdbId === result?.imdbId;
-  }
-
   // Requests a search result's details
   showDetail(result: SearchResult) {
-    this.loaderService.setActive();
-    this.searchService.searchById(result.imdbId)
-      .subscribe(
-        (fullDetails: FullDetails) => this.searchResultDetailsEmitter.next(fullDetails),
-        (error: Response | string) => this.showError(error),
-      )
-      .add(() => this.loaderService.setInactive());
+    this.store.dispatch(selectResult({ selectedResult: result }));
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -161,34 +140,9 @@ export class MainViewComponent implements OnInit, OnDestroy {
     this.ngOnDestroy();
   }
 
-  private search(term?: string): void {
-
-    this.loaderService.setActive();
-
-    // If we already have a previous search response, we'll request the next page (when
-    // this happens we'll receive no term input parameter); otherwise a new search is
-    // done.
-    const request$ = !!this.searchResponse ? this.searchResponse.next() : this.searchService.searchByString(term);
-    request$
-      .subscribe(
-        (response: SearchResponse) => this.onSearchResponse(response),
-        (error: Response | string) => this.showError(error),
-      )
-      .add(() => this.loaderService.setInactive());
-  }
-
   private showError(error: string | Response) {
     console.error(error);
     const display = (typeof error === 'string') ? error : (error as Response).statusText || GENERIC_ERROR_MSG;
     this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: ERROR_SNACK_DURATION });
-  }
-
-  private onSearchResponse(response: SearchResponse): void {
-
-    // We keep the received response, then emit the results for the search result list to load them
-    this.searchResponse = response;
-
-    const accumulatedSearchResults = this.searchResultEmitter.value.concat(response.results);
-    this.searchResultEmitter.next(accumulatedSearchResults);
   }
 }
