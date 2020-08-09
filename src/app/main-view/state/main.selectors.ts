@@ -1,6 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { MainState } from './main.state';
-import { AppState } from 'src/app/app.state';
+import { AppState } from '../../state/app.state';
 
 export const mainSelector = createFeatureSelector<AppState, MainState>('main');
 export const searchTermSelector = createSelector(mainSelector, (state) => state.searchTerm);

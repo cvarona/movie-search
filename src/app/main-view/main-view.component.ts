@@ -6,10 +6,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { Store, select } from '@ngrx/store';
 
-import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, FullDetails } from '../ombd/ombd.interface';
+import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, FullDetails } from '../services/ombd/ombd.interface';
 import { Favorite } from '../favorites/favorite.interface';
 import { FavoriteService } from '../favorites/favorite.service';
-import { AppState } from '../app.state';
+import { AppState } from '../state/app.state';
 import { search, loadMore, selectResult } from './state/main.actions';
 import { resultDetailsSelector, searchResultsSelector, searchTermSelector } from './state/main.selectors';
 

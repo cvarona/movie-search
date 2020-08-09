@@ -18,7 +18,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { EffectsModule } from '@ngrx/effects';
 import { MainEffects } from './main-view/state/main.effects';
-import { debug } from './debug.reducer';
+import { debug } from './state/debug.reducer';
 
 @NgModule({
   declarations: [

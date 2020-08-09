@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { OmbdService } from '../../ombd/ombd.service';
-
-import { search as searchAction, selectResult, loadMore } from './main.actions';
 import { mergeMap, map, catchError, take, switchMap } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
-import { SearchResponse } from '../../ombd/ombd.interface';
 import { Store } from '@ngrx/store';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
+
+
+import { search as searchAction, selectResult, loadMore } from './main.actions';
+import { SearchResponse } from '../../services/ombd/ombd.interface';
+import { OmbdService } from '../../services/ombd/ombd.service';
 import { MainState } from './main.state';
 import { searchResponseSelector } from './main.selectors';
 
