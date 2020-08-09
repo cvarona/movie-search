@@ -19,6 +19,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { EffectsModule } from '@ngrx/effects';
 import { MainEffects } from './main-view/state/main.effects';
 import { debug } from './state/debug.reducer';
+import { httpInterceptorProviders } from './interceptors';
 
 @NgModule({
   declarations: [
@@ -40,7 +41,7 @@ import { debug } from './state/debug.reducer';
     StoreModule.forRoot({ main: mainReducer }, { metaReducers: [debug]}),
     EffectsModule.forRoot([MainEffects]),
   ],
-  providers: [],
+  providers: [httpInterceptorProviders],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

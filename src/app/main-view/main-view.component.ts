@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener, ChangeDe
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil, debounceTime, filter, take } from 'rxjs/operators';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { Store, select } from '@ngrx/store';
 
@@ -14,8 +13,6 @@ import { search, loadMore, selectResult } from './state/main.actions';
 import { resultDetailsSelector, searchResultsSelector, searchTermSelector } from './state/main.selectors';
 
 const DEBOUNCE_TIME = 500;
-const ERROR_SNACK_DURATION = 3000;
-const GENERIC_ERROR_MSG = 'Oops! Something went wrong';
 
 type FavoriteIcon = 'star' | 'star_outline';
 
@@ -55,7 +52,6 @@ export class MainViewComponent implements OnInit, OnDestroy {
   constructor(
     private store: Store<AppState>,
     private favoriteService: FavoriteService,
-    private matSnackBar: MatSnackBar,
   ) {
 
     // Observable initialization
@@ -138,11 +134,5 @@ export class MainViewComponent implements OnInit, OnDestroy {
     // ngOnDestroy won't get invoked if the user closes the window or tab, or types
     // another location in the url bar
     this.ngOnDestroy();
-  }
-
-  private showError(error: string | Response) {
-    console.error(error);
-    const display = (typeof error === 'string') ? error : (error as Response).statusText || GENERIC_ERROR_MSG;
-    this.matSnackBar.open(display, undefined, { verticalPosition: 'top', duration: ERROR_SNACK_DURATION });
   }
 }
