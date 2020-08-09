@@ -9,9 +9,9 @@ import { Store, select } from '@ngrx/store';
 import { MINIMUM_SEARCH_TERM_LENGTH, SearchResult, FullDetails } from '../ombd/ombd.interface';
 import { Favorite } from '../favorites/favorite.interface';
 import { FavoriteService } from '../favorites/favorite.service';
-import { MainState, AppState } from '../state';
-import { search, loadMore, selectResult } from '../main.actions';
-import { resultDetailsSelector, searchResultsSelector, searchTermSelector } from '../main.selectors';
+import { AppState } from '../app.state';
+import { search, loadMore, selectResult } from './state/main.actions';
+import { resultDetailsSelector, searchResultsSelector, searchTermSelector } from './state/main.selectors';
 
 const DEBOUNCE_TIME = 500;
 const ERROR_SNACK_DURATION = 3000;

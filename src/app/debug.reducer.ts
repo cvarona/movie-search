@@ -1,5 +1,5 @@
 import { ActionReducer } from '@ngrx/store';
-import { AppState } from './state';
+import { AppState } from './app.state';
 
 
 export function debug(reducer: ActionReducer<AppState>): ActionReducer<AppState> {

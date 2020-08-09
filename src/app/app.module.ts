@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { StoreModule } from '@ngrx/store';
-import { mainReducer } from './main.reducer';
+import { mainReducer } from './main-view/state/main.reducer';
 
 import { AppComponent } from './app.component';
 import { MainViewComponent } from './main-view/main-view.component';
@@ -17,7 +17,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { EffectsModule } from '@ngrx/effects';
-import { MainEffects } from './main.effects';
+import { MainEffects } from './main-view/state/main.effects';
 import { debug } from './debug.reducer';
 
 @NgModule({

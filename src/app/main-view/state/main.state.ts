@@ -1,8 +1,4 @@
-import { SearchResult, FullDetails, SearchResponse } from './ombd/ombd.interface';
-
-export interface AppState {
-  main: MainState;
-}
+import { SearchResponse, SearchResult, FullDetails } from 'src/app/ombd/ombd.interface';
 
 export interface MainState {
   searchTerm: string;

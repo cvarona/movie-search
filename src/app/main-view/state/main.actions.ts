@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { SearchResult, FullDetails, SearchResponse } from './ombd/ombd.interface';
+import { SearchResult, FullDetails, SearchResponse } from '../../ombd/ombd.interface';
 
 export const search = createAction('[Main] Search', props<{ searchTerm: string }>());
 export const searchSuccess = createAction('[Main] Search success', props<{ searchResponse: SearchResponse }>());

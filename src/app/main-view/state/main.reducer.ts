@@ -1,5 +1,5 @@
 import { createReducer, on, Action } from '@ngrx/store';
-import { MainState } from './state';
+import { MainState } from './main.state';
 import { search, selectResult, reset, searchSuccess, resultDetailsSuccess } from './main.actions';
 
 export const initialState: MainState = {
